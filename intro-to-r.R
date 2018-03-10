@@ -7,19 +7,176 @@
 # Ryann Grochowski Jones, ProPublica (ryann.jones@propublica.org)
 
 # set working directory
-setwd("C:\\Users\\RGrochowski\\Desktop\\intro-to-r")
+setwd("~/intro-to-r")
+
+# when you use a package on a computer for the first time, you need to install it
+# install.packages("tidyverse")
+# install.packages("lubridate")
+# install.packages("stringr")
+# install.packages("readxl")
+
 
 # load packages
 library(tidyverse)
 library(lubridate)
+library(stringr)
+library(readxl)
+library(lubridate)
+library(tidyr)
+
 
 ## http://blog.rstudio.com/2015/04/09/readr-0-1-0/
 
-# load data
-chiCrime2017 <- read_csv("data/chicago_crime_2017.csv",
+# load data --------
+chiCrime2017 <- read_csv("chicago_crime_2017.csv",
                         col_names = TRUE, na = c("", "NA"),
                         trim_ws = TRUE, guess_max = min(1000))
 
+# there's also a general purpose function for loading data that is 
+# not as nicely formatted 
+
+# we can specify column names and column types
+# names <- colnames(chiCrime2017)
+# we can also choose to load only some of the columns by using cols_only
+
+
+# chiCrime2017_notused <- read_delim("chicago_crime_2017.csv", delim = ',' , col_names = names, 
+# col_types = cols_only(ID = col_integer(), 
+# `Case Number` = col_character(),
+# Date = col_character(),
+# Block = col_character(),
+# IUCR = col_character(),
+# `Primary Type` = col_character(),
+# Description = col_character(),
+# `Location Description` = col_character(),
+# Arrest = col_logical(),
+# Domestic = col_logical(),
+# Beat = col_integer(),
+# District = col_integer(),
+# Ward = col_integer(),
+# `Community Area` = col_integer(),
+# `FBI Code` = col_character()
+# ))
+
+# rm(chiCrime2017_notused)
+
+# Now we want to load a tab from an excel spreadsheet
+# But we don't remember how
+# We can pull up the documentation for a function using a '?' before the name
+
+?read_excel
+
+# The help pane shows us what arguments are needed for the function
+# We want just the tab from the our excel file
+
+IL_schools <- read_excel("practice.xlsx", sheet = "IL_schools")
+
+# We're done with foo though, so let's remove it from our environment
+
+
+# Exercise 0 ------
+# Read in the cpd_user_codes.csv table
+
+# Now let's start manipulating our data
+# In the tidyverse, there are two ways to use a function
+
+# The first is to type out the function, complete with arguments
+# Try this:
+?select
+
+# Now let's use 'select' to grab just the case numbers from our crime data
+
+cases <- select(chiCrime2017, `Case Number`)
+
+# But there's another way to use many R functions, that can be more concise and
+# easier to read
+
+# It's called a pipe and looks like this %>% 
+
+cases <- chiCrime2017 %>% select(`Case Number`)
+
+# Piping is most helpful if we are doing more than one operation
+# This code selects just the case ID numbers and then sorts them
+
+IDs_sorted <- chiCrime2017 %>% select(ID) %>% arrange(ID)
+
+rm(IDs_sorted)
+
+# Another useful verb is mutate, it lets us either alter an existing column,
+# or create one or more new ones
+# Let's use a mutate function to properly format the 'Date' field in a new column
+
+# First we'll separate the date itself from the time
+chiCrime2017 <- chiCrime2017 %>% separate(Date, sep = " ", into = c("date_short","time"))
+
+# Then we'll use the lubridate package to date-format the date_short column
+chiCrime2017 <- chiCrime2017 %>% mutate(date_fixed = mdy(date_short))
+
+# Let's take a glance to see if it worked
+View(head(chiCrime2017))  # This shows us the first 6 rows
+
+# Or this, which lets us specify the range of rows we want to see
+View(chiCrime2017 %>% slice(1:100))
+
+# We got no errors, but it's good practice to not just assume a transformation worked
+# We can use the 'count' function to find out how many times each value appears, in particular we keep an eye out for NAs
+
+dates <- chiCrime2017 %>% count(date_fixed)
+
+# We can find them by looking at the tail of dates (helpfully,NAs always go at the end)
+View(tail(dates))
+rm(dates)
+
+# Now that we have date-formatted our column, we can use functions on it or do math like finding the difference between dates
+
+# Let's practice this by making a column with just the month of each date
+chiCrime2017 <- chiCrime2017 %>% mutate(date_month = month(date_fixed))
+
+# Exercise 1 --------
+# Find the number of cases for each Primary Type
+# Hint: when there's a space in the name you must use ``
+
+# Another use of mutate is to recode variables
+# Let's make a switch for District 10
+chiCrime2017 <- chiCrime2017 %>% 
+  mutate(district_10 = ifelse(District == '10',1,0))
+
+chiCrime2017 %>% count(district_10)
+
+# Joining tables -------
+# Joining tables is useful when some of our data is in one table and some is in another
+# We can use the join functions to bring two tables together
+
+# First let's view the cpd_ucr table
+View(head(cpd_ucr))
+
+# When we're doing a join, we need to figure out what column the two tables have in common
+# In this case the field is the 'IUCR' field
+
+# There are different types of join, which you can study up on later, but in this case
+# we want all the rows from chiCrime2017, but only those rows from cpd_ucr that match that table, so we want a left join
+
+chiCrime2017_joined <- left_join(chiCrime2017, cpd_ucr)
+
+# dplyr guesses which column we want to join on, but it's good to check to make sure you agree with its choices
+
+# We can use another useful verb, filter which lets us choose only certain rows
+# Let's find just cases of BATTERY
+
+chiCrime_battery <- chiCrime2017 %>% filter(`Primary Type` == "BATTERY")
+
+# We can also use multiple criteria
+
+chiCrime2017_bar_sidewalk <- chiCrime2017 %>% filter(`Location Description` == 'BAR OR TAVERN' | `Location Description` == 'SIDEWALK')
+
+# One last thing that's useful: group_by and summarize
+# For this, let's use one of the built in R tables
+
+View(mtcars)
+
+# Now let's group by cylinders and find the mean horsepower
+
+cylindrical_horse <- mtcars %>% group_by(cyl) %>% summarize(mean_hp = mean(hp))
 
 ###################################
 ####### DATA VISUALIZATION ########
