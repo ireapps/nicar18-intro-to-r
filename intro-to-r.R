@@ -7,7 +7,7 @@
 # Ryann Grochowski Jones, ProPublica (ryann.jones@propublica.org)
 
 # set working directory
-setwd("~/intro-to-r")
+setwd("C:/Users/Administrator/Desktop/hands_on_classes/Intro_to_R_pre_registered_attendees_only_1098")
 
 # when you use a package on a computer for the first time, you need to install it
 # install.packages("tidyverse")
@@ -27,10 +27,10 @@ library(tidyr)
 
 ## http://blog.rstudio.com/2015/04/09/readr-0-1-0/
 
-# load data --------
+# load data -----------
 chiCrime2017 <- read_csv("chicago_crime_2017.csv",
-                        col_names = TRUE, na = c("", "NA"),
-                        trim_ws = TRUE, guess_max = min(1000))
+                         col_names = TRUE, na = c("", "NA"),
+                         trim_ws = TRUE, guess_max = min(1000))
 
 # there's also a general purpose function for loading data that is 
 # not as nicely formatted 
@@ -71,11 +71,14 @@ chiCrime2017 <- read_csv("chicago_crime_2017.csv",
 
 IL_schools <- read_excel("practice.xlsx", sheet = "IL_schools")
 
-# We're done with foo though, so let's remove it from our environment
+View(head(IL_schools))
 
+# We're done with IL_schools though, so let's remove it from our environment
+rm(IL_schools)
 
 # Exercise 0 ------
-# Read in the cpd_user_codes.csv table
+# Read in the cpd_ucr_codes.csv table with the name cpd_ucr
+cpd_ucr <- read_csv("cpd_ucr_codes.csv")
 
 # Now let's start manipulating our data
 # In the tidyverse, there are two ways to use a function
@@ -86,14 +89,14 @@ IL_schools <- read_excel("practice.xlsx", sheet = "IL_schools")
 
 # Now let's use 'select' to grab just the case numbers from our crime data
 
-cases <- select(chiCrime2017, `Case Number`)
+cases <- select(chiCrime2017, `Case Number`: Block)
 
 # But there's another way to use many R functions, that can be more concise and
 # easier to read
 
 # It's called a pipe and looks like this %>% 
 
-cases <- chiCrime2017 %>% select(`Case Number`)
+cases <- chiCrime2017 %>% select(-`Case Number`)
 
 # Piping is most helpful if we are doing more than one operation
 # This code selects just the case ID numbers and then sorts them
@@ -136,6 +139,7 @@ chiCrime2017 <- chiCrime2017 %>% mutate(date_month = month(date_fixed))
 # Find the number of cases for each Primary Type
 # Hint: when there's a space in the name you must use ``
 
+
 # Another use of mutate is to recode variables
 # Let's make a switch for District 10
 chiCrime2017 <- chiCrime2017 %>% 
@@ -167,7 +171,8 @@ chiCrime_battery <- chiCrime2017 %>% filter(`Primary Type` == "BATTERY")
 
 # We can also use multiple criteria
 
-chiCrime2017_bar_sidewalk <- chiCrime2017 %>% filter(`Location Description` == 'BAR OR TAVERN' | `Location Description` == 'SIDEWALK')
+chiCrime2017_bar_sidewalk <- chiCrime2017 %>% 
+  filter(`Location Description` == 'BAR OR TAVERN' | `Location Description` == 'SIDEWALK')
 
 # One last thing that's useful: group_by and summarize
 # For this, let's use one of the built in R tables
@@ -176,14 +181,14 @@ View(mtcars)
 
 # Now let's group by cylinders and find the mean horsepower
 
-cylindrical_horse <- mtcars %>% group_by(cyl) %>% summarize(mean_hp = mean(hp))
+cylindrical_horse <- mtcars %>% group_by(cyl) %>% summarize(mean_hp = mean(hp), max_mpg = max(mpg))
 
 ###################################
 ####### DATA VISUALIZATION ########
 ###################################
 
 # load El Ridership data
-elRidership <- read_csv("data/cta_ridership_12_17.csv")
+elRidership <- read_csv("cta_ridership_12_17.csv")
 
 # Inspect the data in a View and see what we're working with
 View(elRidership)
@@ -211,7 +216,7 @@ hist(elRidership$rides, breaks = c(0,5000,10000,15000,20000,25000,30000,35000,40
 # Let's look at ridership over time now. 
 # Our dates are not in a good format. Let's clean those using lubridate in a new column. 
 elRidership <- elRidership %>%
-  mutate(date_clean = as.Date(date, "%m/%d/%y"))
+  mutate(date_clean = mdy(date))
 
 # This is a lot of data to work with, so let's filter for just one station near us.
 # There are two stops with Grand in it's name. So we need to use grep to find them.
@@ -219,7 +224,7 @@ grandRidership <- filter(elRidership, grepl("Grand", stationname))
 
 # Let's look at what we're left with now.
 table(grandRidership$stationname) # We're going to be left with two stations here. 
-                                  # Grand/Milwaukee and Grand/State
+# Grand/Milwaukee and Grand/State
 
 # Base R provides us with some standard plots. Not going to be useful but can provide a cursory look.
 plot(grandRidership$date_clean,grandRidership$rides)
@@ -237,8 +242,8 @@ ggplot(grandRidership,aes(date_clean,rides, color=stationname)) + geom_line()
 ggplot(grandRidership,aes(date_clean,rides, color=stationname)) + geom_bar(stat='identity')
 
 # Let's facet this graph by daytype
-ggplot(grandRidership,aes(date_clean,rides, color=stationname)) + geom_point() + 
-  facet_grid(.~daytype)
+ggplot(grandRidership,aes(date_clean,rides, color=daytype)) + geom_point() + 
+  facet_grid(.~stationname)
 
 # This can be hard to see what's going on, but we easily see yearly trends.
 # Let's filter further for just one year of data - 2017.
@@ -246,7 +251,7 @@ ggplot(grandRidership,aes(date_clean,rides, color=stationname)) + geom_point() +
 grandRidership17 <- filter(grandRidership, date_clean >= "2017-01-01" & date_clean <= "2017-12-31")
 
 # What does our most recent plot look like when filtered to one year?
-ggplot(grandRidership17,aes(date_clean,rides, color=daytype)) + geom_point() + 
+ggplot(grandRidership17,aes(date_clean,rides, color=daytype)) + geom_line() + 
   facet_grid(.~stationname)
 
 # We're not going to facet anymore. That was facet-nating, right? 
@@ -284,7 +289,7 @@ myChart
 
 # Now let's output our graphic to a file!
 # First JPEG
-jpeg('output/myChart.jpeg')
+jpeg("myChart.jpeg")
 myChart
 dev.off() # This is very important to end the export!
 
@@ -294,8 +299,4 @@ postscript('output/myChart.eps')
 myChart
 dev.off()
 
-
-
-
-
-
+write_csv(grandStateRidership17, "grand_state.csv")
