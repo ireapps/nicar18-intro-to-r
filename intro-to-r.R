@@ -1,10 +1,10 @@
 # Intro to R (pre-registered class)
 # NICAR 2018
-# Saturday, March 10
+# Saturday, March 10, 9 a.m.
 
-# Charles Minshew, IRE-NICAR (charles@ire.org)
-# Olga Pierce, ProPublica (olga.pierce@propublica.org)
 # Ryann Grochowski Jones, ProPublica (ryann.jones@propublica.org)
+# Olga Pierce, ProPublica (olga.pierce@propublica.org)
+# Charles Minshew, IRE-NICAR (charles@ire.org)
 
 # set working directory
 setwd("C:/Users/Administrator/Desktop/hands_on_classes/Intro_to_R_pre_registered_attendees_only_1098")
@@ -15,7 +15,6 @@ setwd("C:/Users/Administrator/Desktop/hands_on_classes/Intro_to_R_pre_registered
 # install.packages("stringr")
 # install.packages("readxl")
 
-
 # load packages
 library(tidyverse)
 library(lubridate)
@@ -24,10 +23,9 @@ library(readxl)
 library(lubridate)
 library(tidyr)
 
+# Load data -----------
+# http://blog.rstudio.com/2015/04/09/readr-0-1-0/
 
-## http://blog.rstudio.com/2015/04/09/readr-0-1-0/
-
-# load data -----------
 chiCrime2017 <- read_csv("chicago_crime_2017.csv",
                          col_names = TRUE, na = c("", "NA"),
                          trim_ws = TRUE, guess_max = min(1000))
@@ -76,7 +74,7 @@ View(head(IL_schools))
 # We're done with IL_schools though, so let's remove it from our environment
 rm(IL_schools)
 
-# Exercise 0 ------
+# Exercise 0 -----------
 # Read in the cpd_ucr_codes.csv table with the name cpd_ucr
 cpd_ucr <- read_csv("cpd_ucr_codes.csv")
 
@@ -135,7 +133,7 @@ rm(dates)
 # Let's practice this by making a column with just the month of each date
 chiCrime2017 <- chiCrime2017 %>% mutate(date_month = month(date_fixed))
 
-# Exercise 1 --------
+# Exercise 1 -----------
 # Find the number of cases for each Primary Type
 # Hint: when there's a space in the name you must use ``
 
@@ -147,7 +145,7 @@ chiCrime2017 <- chiCrime2017 %>%
 
 chiCrime2017 %>% count(district_10)
 
-# Joining tables -------
+# Joining tables -----------
 # Joining tables is useful when some of our data is in one table and some is in another
 # We can use the join functions to bring two tables together
 
@@ -183,9 +181,7 @@ View(mtcars)
 
 cylindrical_horse <- mtcars %>% group_by(cyl) %>% summarize(mean_hp = mean(hp), max_mpg = max(mpg))
 
-###################################
-####### DATA VISUALIZATION ########
-###################################
+# Data visualization -----------
 
 # load El Ridership data
 elRidership <- read_csv("cta_ridership_12_17.csv")
@@ -299,4 +295,6 @@ postscript('output/myChart.eps')
 myChart
 dev.off()
 
+# And you can export your data from R, too
 write_csv(grandStateRidership17, "grand_state.csv")
+# You don't need dev.off() for data exports
